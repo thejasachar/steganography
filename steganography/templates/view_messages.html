@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Received Messages</h2>
+
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>
+                <strong>From:</strong> {{ message.sender }}<br>
+                <strong>Hidden Message:</strong> {{ message.hidden_message }}<br>
+                {% if message.image %}
+                    <img src="{{ message.image.url }}" alt="Encoded Image" style="max-width: 200px;"><br>
+                {% else %}
+                    <p>Image file not found or has been deleted.</p>
+                {% endif %}
+                <!-- Check if message has a valid ID -->
+                {% if message.id %}
+                    <form method="POST" action="{% url 'delete_message' message.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Delete</button>
+                    </form>
+                {% else %}
+                    <p>Invalid message ID.</p>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No messages available.</p>
+{% endif %}
+
+{% endblock %}

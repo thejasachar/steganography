@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+</head>
+<body>
+    <h2>Welcome, {{ user.username }}</h2>
+    <a href="{% url 'send_message' %}">Send a Message</a>
+    <a href="{% url 'view_messages' %}">view a Message</a>
+    <a href="{% url 'logout' %}">Logout</a> 
+</body>
+</html>
