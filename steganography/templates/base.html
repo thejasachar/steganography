@@ -6,6 +6,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Steganography Project{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'styles.css' %}"> 
+    <style>
+        /* Basic reset */
+        html, body {
+            height: 100%; /* Full height for the body */
+            margin: 0; /* Remove default margin */
+            font-family: 'Courier New', Courier, monospace; /* Monospaced font */
+            background-color: #1e1e1e; /* Dark background */
+            color: #00ff00; /* Green text */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column; /* Align children in a column */
+        }
+
+        nav {
+            background-color: #0a0a0a; /* Darker nav background */
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+        }
+
+        nav ul {
+            list-style-type: none; /* Remove bullet points */
+            padding: 0; /* Remove padding */
+        }
+
+        nav ul li {
+            display: inline; /* Display items inline */
+            margin-right: 20px; /* Spacing between links */
+        }
+
+        nav a {
+            color: #00ff00; /* Green text for links */
+            text-decoration: none; /* Remove underline */
+            transition: color 0.3s; /* Smooth transition for hover effect */
+        }
+
+        nav a:hover {
+            color: #ffcc00; /* Change color on hover */
+        }
+
+        .content {
+            flex: 1; /* Allow the content to grow and fill the available space */
+            padding: 20px; /* Add padding for content */
+            border-top: 1px solid #333; /* Top border for separation */
+            display: flex; /* Use flexbox to center content */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            position: relative; /* Position relative for the background image */
+            overflow: hidden; /* Hide overflowing content */
+        }
+
+        .hacking-background {
+            background-image: url("static/css/hacker_image/Hacker.jpg.webp");
+            background-size: cover; /* Cover the entire content area */
+            background-position: center; /* Center the image */
+            position: absolute; /* Position absolute to fill the content area */
+            top: 0; /* Align to top */
+            left: 0; /* Align to left */
+            right: 0; /* Align to right */
+            bottom: 0; /* Align to bottom */
+            z-index: 1; /* Ensure it is behind other content */
+            filter: blur(3px); /* Optional: Blur the background for better text visibility */
+        }
+
+        .welcome-message {
+            position: relative; 
+            z-index: 2; 
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 90px; 
+            font-weight: bold; 
+            text-align: center; 
+            color: #00ff00; 
+        }
+
+        .footer {
+            background-color: #0a0a0a; /* Dark footer background */
+            text-align: center; /* Center text */
+            padding: 10px; /* Add padding */
+            color: #00ff00; /* Green text */
+            box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+        }
+
+        /* Responsive styles */
+        @media (max-width: 600px) {
+            nav ul li {
+                display: block; /* Stack links vertically on small screens */
+                margin-right: 0;
+                margin-bottom: 10px; /* Spacing between stacked links */
+            }
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -23,12 +115,11 @@
     </nav>
 
     <div class="content">
-        {% block content %}
-        <!-- Page-specific content goes here -->
-        {% endblock %}
+        <div class="hacking-background"></div>
+        <div class="welcome-message">Welcome!</div>
     </div>
 
-    <footer>
+    <footer class="footer">
         <p>© 2024 Steganography Project</p>
     </footer>
 </body>
