@@ -152,7 +152,8 @@ def user_login(request):
             login(request, user)
             return redirect('home')
     return render(request, 'login.html')
-@login_required
+
+@login_required(login_url='login')
 def home(request):
     return render(request, 'home.html')
 
