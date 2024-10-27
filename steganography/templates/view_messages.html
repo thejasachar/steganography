@@ -1,174 +1,33 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Received Messages</title>
-    <style>
-        /* Reset and font setup */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Courier New', Courier, monospace;
-        }
+<h2>Received Messages</h2>
 
-        /* Fullscreen dark background */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #000;
-            color: #00ff00;
-            overflow: hidden;
-        }
+{% if messages %}
+    <ul>
+        {% for message in messages %}
+            <li>
+                <strong>From:</strong> {{ message.sender }}<br>
+                <strong>Hidden Message:</strong> {{ message.hidden_message }}<br>
+                {% if message.image %}
+                    <img src="{{ message.image.url }}" alt="Encoded Image" style="max-width: 200px;"><br>
+                {% else %}
+                    <p>Image file not found or has been deleted.</p>
+                {% endif %}
+                <!-- Check if message has a valid ID -->
+                {% if message.id %}
+                    <form method="POST" action="{% url 'delete_message' message.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Delete</button>
+                    </form>
+                {% else %}
+                    <p>Invalid message ID.</p>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No messages available.</p>
+{% endif %}
 
-        /* Matrix background animation */
-        .matrix-background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-            background: radial-gradient(circle, rgba(0, 0, 0, 0.8), #000 100%);
-        }
-
-        .matrix-background span {
-            position: absolute;
-            font-size: 1rem;
-            color: rgba(0, 255, 0, 0.85);
-            animation: matrix-fall linear infinite;
-        }
-
-        /* Keyframes for falling matrix effect */
-        @keyframes matrix-fall {
-            0% { transform: translateY(-100%); opacity: 1; }
-            100% { transform: translateY(100vh); opacity: 0; }
-        }
-
-        /* Content container */
-        .content-container {
-            background-color: rgba(0, 0, 0, 0.85);
-            padding: 2rem;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 800px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
-            color: #00ff00;
-            z-index: 1;
-        }
-
-        /* Title styling */
-        h2 {
-            margin-bottom: 1.5rem;
-            color: #00ff00;
-            font-size: 2rem;
-        }
-
-        /* Message styling */
-        ul {
-            list-style-type: none;
-            margin-top: 1rem;
-            padding-left: 0;
-        }
-
-        li {
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #00ff00;
-            border-radius: 8px;
-            text-align: left;
-        }
-
-        img {
-            margin-top: 0.5rem;
-            max-width: 100%;
-            border-radius: 4px;
-            border: 1px solid #00ff00;
-        }
-
-        /* Button styling */
-        button[type="submit"] {
-            background-color: #00ff00;
-            color: #000;
-            border: none;
-            border-radius: 4px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.3s ease;
-        }
-
-        button[type="submit"]:hover {
-            background-color: #00cc00;
-        }
-
-        /* Link styling */
-        .form-footer a {
-            color: #00ff00;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 1rem;
-        }
-
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="matrix-background">
-        <!-- Matrix effect using random numbers -->
-        <script>
-            const matrixContainer = document.querySelector('.matrix-background');
-            for (let i = 0; i < 200; i++) {
-                const matrixChar = document.createElement('span');
-                matrixChar.textContent = Math.floor(Math.random() * 10); // Random number
-                matrixChar.style.left = Math.random() * 100 + 'vw';
-                matrixChar.style.animationDuration = Math.random() * 3 + 2 + 's';
-                matrixChar.style.animationDelay = Math.random() * 2 + 's';
-                matrixContainer.appendChild(matrixChar);
-            }
-        </script>
-    </div>
-
-    <div class="content-container">
-        <h2>Received Messages</h2>
-
-        {% if messages %}
-            <ul>
-                {% for message in messages %}
-                    <li>
-                        <strong>From:</strong> {{ message.sender }}<br>
-                        <strong>Hidden Message:</strong> {{ message.hidden_message }}<br>
-                        {% if message.image %}
-                            <img src="{{ message.image.url }}" alt="Encoded Image">
-                        {% else %}
-                            <p>Image file not found or has been deleted.</p>
-                        {% endif %}
-                        {% if message.id %}
-                            <form method="POST" action="{% url 'delete_message' message.id %}" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit">Delete</button>
-                            </form>
-                        {% else %}
-                            <p>Invalid message ID.</p>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No messages available.</p>
-        {% endif %}
-    </div>
-</body>
-</html>
 {% endblock %}
