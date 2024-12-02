@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Steganography Project{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'styles.css' %}"> 
     <style>
         /* Basic reset */
         html, body {
@@ -59,7 +58,7 @@
         }
 
         .hacking-background {
-            background-image: url("static/css/hacker_image/Hacker.jpg.webp");
+            {% comment %} background-image: url("static/css/hacker_image/123.jpg"); /* Background image */ {% endcomment %}
             background-size: cover; /* Cover the entire content area */
             background-position: center; /* Center the image */
             position: absolute; /* Position absolute to fill the content area */

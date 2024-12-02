@@ -17,58 +17,61 @@ def encode_data_in_image(image_path, data):
     try:
         img = Image.open(image_path)
         img = img.convert('RGB')
-        data += '###'  # Using a delimiter to separate the hidden message
+        data += '###'  # Delimiter to separate the hidden message
         data_bits = ''.join(format(ord(i), '08b') for i in data)
 
-        data_index = 0
-        pixels = np.array(img)
-
-        if len(data_bits) > pixels.size:
+        if len(data_bits) > img.size[0] * img.size[1] * 3:  # Each pixel has 3 channels
             raise ValueError("Data is too large to encode in the provided image.")
+
+        pixels = np.array(img)
+        data_index = 0
 
         for i in range(pixels.shape[0]):
             for j in range(pixels.shape[1]):
-                if data_index < len(data_bits):
-                    # Modify the least significant bit of the red channel
-                    pixels[i, j][0] = (pixels[i, j][0] & 0xFE) | int(data_bits[data_index])
-                    data_index += 1
-                else:
-                    break
+                for k in range(3):  # Iterate over R, G, B channels
+                    if data_index < len(data_bits):
+                        pixels[i, j, k] = (pixels[i, j, k] & 0xFE) | int(data_bits[data_index])
+                        data_index += 1
 
         encoded_image = Image.fromarray(pixels)
 
-        # Save the encoded image in the media/uploads directory
-        fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'uploads'))
+        # Save the encoded image to media/uploads
+        uploads_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
         encoded_image_name = f"encoded_{os.path.basename(image_path)}"
-        buffer = BytesIO()
-        encoded_image.save(buffer, format='PNG')  # Save as PNG to prevent compression artifacts
-        buffer.seek(0)
+        encoded_image_path = os.path.join(uploads_dir, encoded_image_name)
 
-        # Save the encoded image using FileSystemStorage
-        fs.save(encoded_image_name, buffer)
-        return fs.url(encoded_image_name)  # Return the URL to access the image
+        encoded_image.save(encoded_image_path, format='PNG')  # Save as PNG
+        return encoded_image_path  # Return the absolute path to the encoded image
 
     except Exception as e:
-        return str(e)  # Return the error message for debugging
+        return str(e)  # Return error message for debugging
+
 
 def decode_data_from_image(image_path):
-    img = Image.open(image_path)
-    pixels = np.array(img)
-    binary_data = ""
+    try:
+        img = Image.open(image_path)
+        pixels = np.array(img)
+        binary_data = ""
 
-    for i in range(pixels.shape[0]):
-        for j in range(pixels.shape[1]):
-            binary_data += str(pixels[i, j][0] & 1)
+        for i in range(pixels.shape[0]):
+            for j in range(pixels.shape[1]):
+                for k in range(3):  # Extract from R, G, B channels
+                    binary_data += str(pixels[i, j, k] & 1)
 
-    # Split binary data into bytes and convert
-    message_bits = [binary_data[i:i + 8] for i in range(0, len(binary_data), 8)]
-    decoded_message = ""
-    for byte in message_bits:
-        decoded_message += chr(int(byte, 2))
-        if decoded_message[-3:] == '###':  # Your delimiter
-            break
+        # Split binary data into bytes and decode
+        message_bits = [binary_data[i:i + 8] for i in range(0, len(binary_data), 8)]
+        decoded_message = ""
+        for byte in message_bits:
+            decoded_message += chr(int(byte, 2))
+            if decoded_message.endswith('###'):  # Check for delimiter
+                return decoded_message[:-3]  # Remove delimiter
 
-    return decoded_message[:-3]  # Remove delimiter
+        return "No hidden message found."
+
+    except Exception as e:
+        return str(e)  # Return error message for debugging
+
 
 
 @login_required(login_url='login')
@@ -76,30 +79,39 @@ def send_message(request):
     if request.method == 'POST':
         recipient_username = request.POST.get('recipient')
         hidden_message = request.POST.get('hidden_message')
-        image = request.FILES.get('image')  # Get the uploaded image file
+        image = request.FILES.get('image')
 
         recipient = get_object_or_404(User, username=recipient_username)
 
         if image:
-            # Save the image directly in the media/uploads directory
-            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'uploads'))
-            filename = fs.save(image.name, image)
-            uploaded_file_path = fs.path(filename)  # Get the file path
+            # Save the uploaded image to media/uploads
+            uploads_dir = os.path.join(settings.MEDIA_ROOT, 'uploads')
+            os.makedirs(uploads_dir, exist_ok=True)
+            uploaded_file_path = os.path.join(uploads_dir, image.name)
+
+            with open(uploaded_file_path, 'wb+') as destination:
+                for chunk in image.chunks():
+                    destination.write(chunk)
 
             try:
                 # Encode the hidden message in the image
-                encoded_image_url = encode_data_in_image(uploaded_file_path, hidden_message)
+                encoded_image_path = encode_data_in_image(uploaded_file_path, hidden_message)
+                encoded_image_relative_path = os.path.relpath(encoded_image_path, settings.MEDIA_ROOT)
 
                 # Save the message
-                message = Message(sender=request.user, recipient=recipient, image=encoded_image_url, hidden_message=hidden_message)
+                message = Message(
+                    sender=request.user,
+                    recipient=recipient,
+                    image=encoded_image_relative_path,
+                    hidden_message=hidden_message
+                )
                 message.save()
 
             except Exception as e:
-                # Handle any error that occurs during encoding or saving
-                return render(request, 'send_message.html', {'error': f'An error occurred: {str(e)}'})
+                return render(request, 'send_message.html', {'error': f'Error: {str(e)}'})
 
             finally:
-                # Clean up the temporary image if needed
+                # Clean up the original uploaded file
                 if os.path.exists(uploaded_file_path):
                     os.remove(uploaded_file_path)
         else:
@@ -108,6 +120,7 @@ def send_message(request):
         return redirect('home')
 
     return render(request, 'send_message.html')
+
 
 @login_required(login_url='login')
 def view_messages(request):
@@ -128,33 +141,34 @@ def view_messages(request):
     return render(request, 'view_messages.html', context)
 @login_required(login_url='login')
 def decode_message(request, message_id):
-    # Get the message object
     message = get_object_or_404(Message, id=message_id)
-    # Path to the image
-    image_path = message.image.path
+
+    # Construct the absolute path to the image
+    image_path = os.path.join(settings.MEDIA_ROOT, message.image.name)
 
     try:
-        # Decode the message
         decoded_message = decode_data_from_image(image_path)
         return JsonResponse({'decoded_message': decoded_message})
     except Exception as e:
         return JsonResponse({'error': str(e)})
+
 @login_required(login_url='login')
 def delete_message(request, message_id):
     message = get_object_or_404(Message, id=message_id)
 
-    # Check if the logged-in user is either the sender or recipient
+    # Ensure only the sender or recipient can delete
     if message.sender == request.user or message.recipient == request.user:
         if request.method == "POST":
-            # Proceed with deletion if confirmed
+            # Delete the message and redirect
             message.delete()
-            return redirect('view_messages')  # Redirect to the messages view
+            return redirect('view_messages')
         else:
-            # Render confirmation template
-            context = {'message': message}
-            return render(request, 'confirm_delete.html', context)
+            # Redirect back if the request is not POST
+            return redirect('view_messages')
     else:
+        # Show error if the user isn't authorized
         return render(request, 'error.html', {'error': 'You do not have permission to delete this message.'})
+
 
 def register(request):
     if request.method == 'POST':
@@ -181,7 +195,7 @@ def user_login(request):
 def home(request):
     return render(request, 'home.html')
 
-@login_required
+@login_required(login_url='login')
 def user_logout(request):
     logout(request)
     return redirect('login')
