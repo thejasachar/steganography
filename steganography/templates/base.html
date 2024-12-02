@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Steganography Project{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'styles.css' %}"> 
     <style>
         /* Basic reset */
         html, body {
@@ -59,7 +58,7 @@
         }
 
         .hacking-background {
-            background-image: url("static/css/hacker_image/Hacker.jpg.webp");
+            {% comment %} background-image: url("static/css/hacker_image/123.jpg"); /* Background image */ {% endcomment %}
             background-size: cover; /* Cover the entire content area */
             background-position: center; /* Center the image */
             position: absolute; /* Position absolute to fill the content area */
@@ -103,13 +102,13 @@
     <nav>
         <ul>
             <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'send_message' %}">Send Message</a></li>
-            <li><a href="{% url 'view_messages' %}">View Messages</a></li>
+            {% comment %} <li><a href="{% url 'send_message' %}">Send Message</a></li>
+            <li><a href="{% url 'view_messages' %}">View Messages</a></li> {% endcomment %}
             {% if user.is_authenticated %}
                 <li><a href="{% url 'logout' %}">Logout</a></li>
             {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>
-                <li><a href="{% url 'register' %}">Register</a></li>
+                {% comment %} <li><a href="{% url 'register' %}">Register</a></li> {% endcomment %}
             {% endif %}
         </ul>
     </nav>
